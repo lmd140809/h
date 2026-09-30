@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hệ thống duyệt chứng chỉ</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+  body {
+    min-height: 100vh;
+    background: #0d1117;
+    display: flex; justify-content: center; align-items: center;
+    padding: 20px;
+    color: #e6edf3;
+  }
+  .box {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 36px 30px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.6);
+  }
+  .logo {
+    text-align: center; margin-bottom: 24px;
+  }
+  .logo .icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: linear-gradient(135deg, #2f81f7, #1f6feb);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px; font-size: 30px;
+  }
+  h1 { font-size: 20px; text-align: center; margin-bottom: 6px; }
+  .sub { text-align: center; color: #8b949e; font-size: 13px; margin-bottom: 26px; }
+
+  label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 12px 14px;
+    background: #0d1117; border: 1px solid #30363d;
+    border-radius: 8px; color: #e6edf3; font-size: 14px;
+    outline: none; margin-bottom: 16px; transition: .2s;
+  }
+  input:focus { border-color: #2f81f7; box-shadow: 0 0 0 3px rgba(47,129,247,.25); }
+
+  button {
+    width: 100%; padding: 13px;
+    background: #238636; color: #fff;
+    border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: .2s;
+  }
+  button:hover { background: #2ea043; }
+  button:disabled { background: #484f58; cursor: not-allowed; }
+
+  /* Màn hình loading */
+  .loader {
+    text-align: center; padding: 20px 0;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid #30363d;
+    border-top-color: #2f81f7;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader p { font-size: 13px; color: #8b949e; }
+
+  /* Cảnh báo */
+  .alert {
+    background: #2d1618;
+    border: 1px solid #f85149;
+    border-radius: 10px;
+    padding: 20px;
+    animation: fade .4s ease;
+  }
+  @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .alert .head {
+    display: flex; align-items: center; gap: 10px;
+    color: #f85149; font-weight: 700; font-size: 15px;
+    margin-bottom: 12px;
+  }
+  .alert .head .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #f85149; animation: blink 1s infinite;
+  }
+  @keyframes blink { 50% { opacity: .3; } }
+
+  .alert ul {
+    list-style: none; font-size: 13px; color: #ffb3ae;
+    line-height: 1.9;
+  }
+  .alert ul li::before { content: "•  "; color: #f85149; }
+  .alert .note {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px dashed #f8514955;
+    font-size: 12px; color: #8b949e; line-height: 1.6;
+  }
+  .alert code {
+    background: #0d1117; padding: 2px 6px;
+    border-radius: 4px; color: #f85149;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="box" id="box">
+
+  <!-- FORM ĐĂNG NHẬP -->
+  <div id="loginView">
+    <div class="logo">
+      <div class="icon">🔐</div>
+      <h1>Hệ thống duyệt chứng chỉ</h1>
+      <p class="sub">Vui lòng đăng nhập để tiếp tục</p>
+    </div>
+
+    <label for="user">Tài khoản</label>
+    <input type="text" id="user" placeholder="Nhập tài khoản..." autocomplete="off">
+
+    <label for="pass">Mật khẩu</label>
+    <input type="password" id="pass" placeholder="Nhập mật khẩu..." autocomplete="off">
+
+    <button id="btnLogin" onclick="dangNhap()">Đăng nhập</button>
+  </div>
+
+  <!-- MÀN HÌNH LOADING -->
+  <div id="loadingView" class="hidden">
+    <div class="loader">
+      <div class="spinner"></div>
+      <p id="loadingText">Đang xác thực tài khoản...</p>
+    </div>
+  </div>
+
+  <!-- MÀN HÌNH CẢNH BÁO -->
+  <div id="alertView" class="hidden">
+    <div class="alert">
+      <div class="head"><span class="dot"></span> CẢNH BÁO BẢO MẬT</div>
+      <ul>
+        <li>Phát hiện <b>dữ liệu lạ</b> trên thiết bị</li>
+        <li>Phiên đăng nhập không hợp lệ</li>
+        <li>Dấu hiệu truy cập trái phép</li>
+        <li>Địa chỉ IP: <code id="ipText">...</code></li>
+        <li>Thời gian: <code id="timeText">...</code></li>
+      </ul>
+      <div class="note">
+        ⚠️ Hệ thống đã tạm khóa phiên này.<br>
+        Vui lòng <b>liên hệ admin</b> để được xử lý và mở lại quyền truy cập.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function dangNhap() {
+  const user = document.getElementById('user').value.trim();
+  const pass = document.getElementById('pass').value.trim();
+
+  if (!user || !pass) {
+    alert('Vui lòng nhập đầy đủ tài khoản và mật khẩu!');
+    return;
+  }
+
+  // Ẩn form, hiện loading
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('loadingView').classList.remove('hidden');
+
+  const loadingText = document.getElementById('loadingText');
+  const steps = [
+    'Đang xác thực tài khoản...',
+    'Đang kiểm tra quyền truy cập...',
+    'Đang quét dữ liệu thiết bị...',
+    'Phát hiện bất thường...'
+  ];
+  let i = 0;
+  const interval = setInterval(() => {
+    loadingText.textContent = steps[i] || steps[steps.length - 1];
+    i++;
+    if (i >= steps.length) {
+      clearInterval(interval);
+      setTimeout(hienCanhBao, 900);
+    }
+  }, 900);
+}
+
+function hienCanhBao() {
+  document.getElementById('loadingView').classList.add('hidden');
+  document.getElementById('alertView').classList.remove('hidden');
+
+  // Random IP giả lập
+  const ip = `${rand(1,255)}.${rand(0,255)}.${rand(0,255)}.${rand(1,255)}`;
+  document.getElementById('ipText').textContent = ip;
+
+  // Thời gian hiện tại
+  const now = new Date();
+  document.getElementById('timeText').textContent =
+    now.toLocaleString('vi-VN');
+}
+
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/* Nhấn Enter để đăng nhập */
+document.getElementById('pass').addEventListener('keypress', e => {
+  if (e.key === 'Enter') dangNhap();
+});
+document.getElementById('user').addEventListener('keypress', e => {
+  if (e.key === 'Enter') document.getElementById('pass').focus();
+});
+</script>
+</body>
+</html>
