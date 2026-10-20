@@ -1,0 +1,27 @@
+
+name: Extract ZIP on GitHub
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract archive
+        run: |
+          mkdir -p extracted
+          unzip -o LE-MINH-DUC-pairing-access-update.zip -d extracted
+
+      - name: Save extracted files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add extracted
+          git diff --cached --quiet || git commit -m "Extract ZIP on GitHub"
+          git push
