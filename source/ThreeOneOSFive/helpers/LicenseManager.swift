@@ -7,10 +7,10 @@ import UIKit
 final class LicenseManager: ObservableObject {
     
     // MARK: - State
-    @Published private(set) var expirationDate: Date?
-    @Published private(set) var isActive = false
+    @Published private(set) var expirationDate: Date? = nil
+    @Published private(set) var isActive: Bool = true // Luôn luôn là true để vào app không cần key
     @Published private(set) var isBusy = false
-    @Published private(set) var message: String?
+    @Published private(set) var message: String? = "Sẵn sàng sử dụng"
     @Published private(set) var contactOwner: String? = "0358648824"
     @Published var rememberKey = true
     @Published var forceLogout = false
@@ -19,61 +19,35 @@ final class LicenseManager: ObservableObject {
     private let keychain = Keychain(service: "com.minhduc.admin.activation")
     private let keyAccount = "license-key"
     private let lastCheckAccount = "license-last-check"
-    private var lastAttemptAt: Date?
 
-    init() { isActive = hasRememberedKey }
+    // Khởi tạo: Luôn đặt trạng thái active = true
+    init() { 
+        self.isActive = true 
+    }
 
-    var hasRememberedKey: Bool { !(keychain.string(keyAccount) ?? "").isEmpty }
-    func rememberedKey() -> String? { keychain.string(keyAccount) }
-    func refresh() { isActive = hasRememberedKey }
+    // Các hàm kiểm tra key (giữ lại để tránh lỗi nếu UI có gọi tới, nhưng không làm gì cả)
+    var hasRememberedKey: Bool { true } // Luôn báo là đã có key
+    func rememberedKey() -> String? { "ACTIVATED" }
+    func refresh() { isActive = true }
 
     // MARK: - Lifecycle
     func beginLaunchSession() {
-        isActive = hasRememberedKey
-        message = isActive ? "Sẵn sàng sử dụng" : "Cần nhập key — vui lòng nhập access key"
-    }
-
-    // MARK: - Kích hoạt
-    func activate(key: String) {
-        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !isBusy else { return }
-
-        if let last = lastAttemptAt, Date().timeIntervalSince(last) < 1 {
-            message = "Vui lòng chờ một chút rồi thử lại"
-            return
-        }
-        lastAttemptAt = Date()
-        isBusy = true
-        message = "Đang kiểm tra key…"
-        
-        // Giả lập quá trình kiểm tra (Bạn sẽ cần viết logic mới ở đây nếu không dùng GitHub)
-        Task {
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // Giả lập đợi 1 giây
-            self.isBusy = false
-            self.message = "Tính năng kết nối server đã bị gỡ bỏ."
-            // finishActivation(key: trimmed, matched: ..., announcement: nil)
-        }
-    }
-
-    private func finishActivation(key: String, announcement: Announcement?) {
-        if rememberKey { keychain.save(key, account: keyAccount) }
-        keychain.save(ISO8601DateFormatter().string(from: Date()), account: lastCheckAccount)
-        self.announcement = announcement
-        // expirationDate = ... (Cần logic mới)
         isActive = true
-        forceLogout = false
-        message = "Kích hoạt thành công"
+        message = "Sẵn sàng sử dụng"
     }
 
-    // MARK: - Hủy kích hoạt
+    // MARK: - Kích hoạt (Không cần làm gì)
+    func activate(key: String) {
+        // Không làm gì cả vì app đã mặc định active
+        isActive = true
+        message = "Sẵn sàng sử dụng"
+    }
+
+    // MARK: - Hủy kích hoạt (Không cần làm gì)
     func deactivate() {
-        keychain.delete(keyAccount)
-        keychain.delete(lastCheckAccount)
-        isActive = false
-        expirationDate = nil
-        forceLogout = false
-        announcement = nil
-        message = "Đã xoá kích hoạt"
+        // Không cho phép hủy kích hoạt
+        isActive = true
+        message = "Sẵn sàng sử dụng"
     }
 }
 
@@ -86,7 +60,7 @@ struct Announcement: Codable, Identifiable {
     let isUrgent: Bool
 }
 
-// MARK: - Keychain
+// MARK: - Keychain (Giữ lại để tránh lỗi nếu có file khác gọi tới)
 struct Keychain {
     let service: String
 
