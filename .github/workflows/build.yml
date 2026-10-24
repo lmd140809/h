@@ -1,14 +1,20 @@
+
 name: Build Unsigned IPA
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     name: Build OGIOS (unsigned)
     runs-on: macos-15
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -23,53 +29,54 @@ jobs:
         run: |
           echo "=== source/ ==="
           ls -la source/
+
           echo "=== Patches ==="
           ls -la "source/ThreeOneOSFive/Patches/" || true
-          echo "=== build_unsigned.sh (first 60 lines) ==="
-          head -60 source/build_unsigned.sh || true
 
-      - name: Build archive (unsigned)
+          echo "=== Build script ==="
+          if [ ! -f source/build_unsigned.sh ]; then
+            echo "ERROR: Khong tim thay source/build_unsigned.sh"
+            exit 1
+          fi
+
+          head -60 source/build_unsigned.sh
+
+      - name: Build archive and IPA
         run: |
+          set -euo pipefail
+
           cd source
           chmod +x build_unsigned.sh
           ./build_unsigned.sh
 
-      - name: Locate archive
-        id: locate
+      - name: Verify IPA output
         run: |
-          cd source
-          echo "=== Nội dung build/ ==="
-          ls -la build/ || true
-          ARCHIVE=$(find build -maxdepth 1 -name "*.xcarchive" -type d | head -n 1)
-          if [ -z "$ARCHIVE" ]; then
-            echo "❌ Không tìm thấy .xcarchive trong build/"
-            exit 1
-          fi
-          echo "archive=$ARCHIVE" >> $GITHUB_OUTPUT
-          echo "✅ Archive: $ARCHIVE"
+          set -euo pipefail
 
-      - name: Package IPA
-        run: |
-          cd source
-          ARCHIVE="${{ steps.locate.outputs.archive }}"
-          APP_PATH="$ARCHIVE/Products/Applications/OGIOS.app"
-          if [ ! -d "$APP_PATH" ]; then
-            echo "❌ Không tìm thấy app tại: $APP_PATH"
-            echo "=== Cấu trúc archive ==="
-            find "$ARCHIVE/Products" -maxdepth 3 || true
+          IPA="source/build/HYper-Regedit-Key-Enabled-unsigned.ipa"
+
+          echo "=== Build directory ==="
+          ls -lah source/build/
+
+          if [ ! -f "$IPA" ]; then
+            echo "ERROR: Khong tim thay IPA tai $IPA"
+            echo "Kiem tra ten file IPA do build_unsigned.sh tao ra."
             exit 1
           fi
-          rm -rf Payload
-          mkdir -p Payload
-          cp -R "$APP_PATH" Payload/
-          rm -f OGIOS-unsigned.ipa
-          zip -r OGIOS-unsigned.ipa Payload
-          ls -lh OGIOS-unsigned.ipa
+
+          echo "=== IPA file ==="
+          ls -lh "$IPA"
+
+          echo "=== Validate ZIP/IPA structure ==="
+          unzip -t "$IPA"
+
+          echo "=== Check Payload/OGIOS.app ==="
+          unzip -Z1 "$IPA" | grep -E '^Payload/[^/]+\.app/Info\.plist$'
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: OGIOS-unsigned-ipa
-          path: source/OGIOS-unsigned.ipa
+          path: source/build/HYper-Regedit-Key-Enabled-unsigned.ipa
           if-no-files-found: error
           retention-days: 14
