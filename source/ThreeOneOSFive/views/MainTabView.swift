@@ -26,6 +26,8 @@ struct MainTabView: View {
                         HomeTabView()
                     case .patch:
                         PatchTabView()
+                    case .scr:
+                        SCRMenuTabView()
                     case .admin:
                         AdminTabView()
                     }
@@ -159,7 +161,7 @@ struct MainTabView: View {
 }
 
 enum MainTab: String, CaseIterable, Identifiable {
-    case home, patch, admin
+    case home, patch, scr, admin
 
     var id: String { rawValue }
 
@@ -167,6 +169,7 @@ enum MainTab: String, CaseIterable, Identifiable {
         switch self {
         case .home:  return "HOME"
         case .patch: return "PATCH"
+        case .scr:   return "SCR"
         case .admin: return "ADMIN"
         }
     }
@@ -175,6 +178,7 @@ enum MainTab: String, CaseIterable, Identifiable {
         switch self {
         case .home:  return "DASHBOARD"
         case .patch: return "PATCH CONTROL"
+        case .scr:   return "SCR CONTROL"
         case .admin: return "ADMIN PANEL"
         }
     }
@@ -183,6 +187,7 @@ enum MainTab: String, CaseIterable, Identifiable {
         switch self {
         case .home:  return "house"
         case .patch: return "bolt"
+        case .scr:   return "switch.2"
         case .admin: return "person.crop.circle"
         }
     }
@@ -191,7 +196,76 @@ enum MainTab: String, CaseIterable, Identifiable {
         switch self {
         case .home:  return "house.fill"
         case .patch: return "bolt.fill"
+        case .scr:   return "switch.2"
         case .admin: return "person.crop.circle.fill"
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MARK: - SCR MENU (LOCAL FEATURE SWITCH)
+// This switch stores a local preference only. It does not patch or
+// modify Free Fire, another app's files, or another app's memory.
+// ═══════════════════════════════════════════════════════════════
+
+private struct SCRMenuTabView: View {
+    @AppStorage("scrInspectorEnabled") private var isEnabled = false
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    Image(systemName: "switch.2")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(ProTheme.goldGradient)
+                        .frame(width: 52, height: 52)
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 15))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("SCR CONTROL")
+                            .font(.system(size: 18, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text("LOCAL FEATURE SWITCH")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .tracking(1.2)
+                            .foregroundStyle(ProTheme.gold)
+                    }
+                    Spacer()
+                }
+
+                HStack(spacing: 12) {
+                    Image(systemName: isEnabled ? "checkmark.circle.fill" : "pause.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(isEnabled ? Color.green : Color.white.opacity(0.45))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Bật công cụ SCR")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text(isEnabled ? "ĐANG BẬT TRONG ỨNG DỤNG" : "ĐANG TẮT")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(isEnabled ? Color.green : Color.white.opacity(0.5))
+                    }
+                    Spacer()
+                    Toggle("Bật công cụ SCR", isOn: $isEnabled)
+                        .labelsHidden()
+                        .tint(ProTheme.gold)
+                        .accessibilityLabel("Bật hoặc tắt công cụ SCR")
+                }
+                .padding(16)
+                .background(Color.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(ProTheme.gold.opacity(0.28), lineWidth: 1))
+
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundStyle(ProTheme.gold)
+                    Text("Công tắc này lưu trạng thái cục bộ trên thiết bị. Hiện tại nó chỉ điều khiển trạng thái giao diện; chưa khởi chạy proxy hoặc thay đổi dữ liệu game.")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.72))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(14)
+                .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14))
+            }
+            .padding(18)
         }
     }
 }
