@@ -5,11 +5,20 @@ import UIKit
 
 @MainActor
 final class LicenseManager: ObservableObject {
-    // MARK: - Cấu hình
-     // xem lưu ý bảo mật bên dưới
+// MARK: - Cấu hình
     private let repoOwner = "lmd140809"
     private let repoName = "MinhDux"
     private let filePath = "keys.json"
+    
+    // Đọc token từ Info.plist (được cấu hình từ file Secrets.xcconfig)
+    private var githubToken: String {
+        guard let token = Bundle.main.object(forInfoDictionaryKey: "GitHubToken") as? String, 
+              !token.isEmpty else {
+            print("⚠️ CẢNH BÁO: Chưa cấu hình GitHubToken trong Info.plist")
+            return ""
+        }
+        return token
+    }
 
     private var apiURL: URL {
         URL(string: "https://api.github.com/repos/\(repoOwner)/\(repoName)/contents/\(filePath)")!
