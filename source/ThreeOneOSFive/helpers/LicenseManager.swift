@@ -6,7 +6,7 @@ import UIKit
 @MainActor
 final class LicenseManager: ObservableObject {
     // MARK: - Cấu hình
-    private let githubToken = "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"   // xem lưu ý bảo mật bên dưới
+    private let githubToken = "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"   // xem lưu ý bảo mật bên dưới
     private let repoOwner = "lmd140809"
     private let repoName = "MinhDux"
     private let filePath = "keys.json"
