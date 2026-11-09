@@ -1,0 +1,87 @@
+
+name: Analyze SCR Mizze
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Extract SCR ZIP
+        run: |
+          python - <<'PY'
+          import zipfile
+          import os
+
+          archive = "scr mizze.zip"
+          assert os.path.exists(archive), "Missing SCR ZIP"
+
+          with zipfile.ZipFile(archive) as z:
+              z.extractall("scr_output")
+
+          print("ZIP extracted successfully")
+          PY
+
+      - name: Check SCR structure
+        run: |
+          python - <<'PY'
+          import os
+          import hashlib
+
+          root = "scr_output/scr mizze"
+
+          files = [
+              "mz.ifix",
+              "mz.full.cs",
+              "mz.hooks.cs",
+              "mz.il.txt",
+              "mz.strings.txt",
+              "mz.methods.txt"
+          ]
+
+          os.makedirs("report", exist_ok=True)
+
+          with open("report/SCR_REPORT.txt", "w") as f:
+              f.write("SCR MIZZE ANALYSIS REPORT\n")
+              f.write("=========================\n\n")
+
+              for name in files:
+                  path = os.path.join(root, name)
+
+                  if os.path.isfile(path):
+                      data = open(path, "rb").read()
+                      sha = hashlib.sha256(data).hexdigest()
+
+                      result = (
+                          f"[FOUND] {name}\n"
+                          f"Size: {len(data)} bytes\n"
+                          f"SHA256: {sha}\n\n"
+                      )
+                  else:
+                      result = f"[MISSING] {name}\n\n"
+
+                  print(result)
+                  f.write(result)
+
+          PY
+
+      - name: Upload analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: SCR-Mizze-Analysis
+          path: |
+            scr_output/scr mizze/
+            report/
