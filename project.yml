@@ -1,0 +1,24 @@
+name: MizzeRebuild
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: 5.0
+    TARGETED_DEVICE_FAMILY: "1"
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_KEY_CFBundleDisplayName: Mizze Rebuild
+    INFOPLIST_KEY_UILaunchScreen_Generation: YES
+targets:
+  MizzeRebuild:
+    type: application
+    platform: iOS
+    sources:
+      - MizzeRebuild
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.MizzeRebuild
+        PRODUCT_NAME: MizzeRebuild
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_EMIT_LOC_STRINGS: YES
