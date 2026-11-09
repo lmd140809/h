@@ -1,24 +1,64 @@
-name: MizzeRebuild
-options:
-  bundleIdPrefix: com.example
-  deploymentTarget:
-    iOS: "16.0"
-settings:
-  base:
-    SWIFT_VERSION: 5.0
-    TARGETED_DEVICE_FAMILY: "1"
-    GENERATE_INFOPLIST_FILE: YES
-    INFOPLIST_KEY_CFBundleDisplayName: Mizze Rebuild
-    INFOPLIST_KEY_UILaunchScreen_Generation: YES
-targets:
-  MizzeRebuild:
-    type: application
-    platform: iOS
-    sources:
-      - MizzeRebuild
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.MizzeRebuild
-        PRODUCT_NAME: MizzeRebuild
-        CODE_SIGN_STYLE: Automatic
-        SWIFT_EMIT_LOC_STRINGS: YES
+name: Build MizzeRebuild iOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build iOS
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Check Xcode
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build iOS app (unsigned)
+        run: |
+          xcodebuild \
+            -project MizzeRebuild.xcodeproj \
+            -scheme MizzeRebuild \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            build
+
+      - name: Package unsigned IPA
+        run: |
+          APP_PATH="build/DerivedData/Build/Products/Release-iphoneos/MizzeRebuild.app"
+          test -d "$APP_PATH" || { echo "App not found at $APP_PATH"; exit 1; }
+
+          rm -rf output
+          mkdir -p output/Payload
+          cp -R "$APP_PATH" output/Payload/
+
+          cd output
+          zip -qry MizzeRebuild-unsigned.ipa Payload
+          echo "IPA created:"
+          ls -lh MizzeRebuild-unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MizzeRebuild-unsigned-iOS-ipa
+          path: output/MizzeRebuild-unsigned.ipa
+          retention-days: 14
