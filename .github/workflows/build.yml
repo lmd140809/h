@@ -24,6 +24,40 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      # BƯỚC QUAN TRỌNG: Tự động tạo project.yml nếu chưa có
+      - name: Ensure project.yml exists
+        run: |
+          if [ ! -f project.yml ]; then
+            echo "project.yml not found, creating a default one..."
+            cat << 'EOF' > project.yml
+          name: MizzeRebuild
+          options:
+            bundleIdPrefix: com.mizze
+            deploymentTarget:
+              iOS: "15.0"
+          targets:
+            MizzeRebuild:
+              type: application
+              platform: iOS
+              sources: 
+                - path: .
+              settings:
+                base:
+                  INFOPLIST_FILE: Info.plist
+                  PRODUCT_BUNDLE_IDENTIFIER: com.mizze.rebuild
+                  GENERATE_INFOPLIST_FILE: YES
+                  CODE_SIGNING_ALLOWED: NO
+          schemes:
+            MizzeRebuild:
+              build:
+                targets:
+                  MizzeRebuild: all
+          EOF
+            echo "Created default project.yml"
+          else
+            echo "project.yml already exists, skipping creation."
+          fi
+
       - name: Generate Xcode project
         run: xcodegen generate
 
@@ -45,7 +79,14 @@ jobs:
       - name: Package unsigned IPA
         run: |
           APP_PATH="build/DerivedData/Build/Products/Release-iphoneos/MizzeRebuild.app"
-          test -d "$APP_PATH" || { echo "App not found at $APP_PATH"; exit 1; }
+          
+          # Kiểm tra xem file .app đã được tạo thành công chưa
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Error: App not found at $APP_PATH"
+            echo "Listing built products:"
+            find build/DerivedData/Build/Products/ -name "*.app" -type d
+            exit 1
+          fi
 
           rm -rf output
           mkdir -p output/Payload
@@ -53,7 +94,7 @@ jobs:
 
           cd output
           zip -qry MizzeRebuild-unsigned.ipa Payload
-          echo "IPA created:"
+          echo "IPA created successfully:"
           ls -lh MizzeRebuild-unsigned.ipa
 
       - name: Upload IPA artifact
