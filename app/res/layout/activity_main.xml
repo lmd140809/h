@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:padding="16dp">
+    <LinearLayout android:orientation="vertical"
+        android:layout_width="match_parent" android:layout_height="wrap_content">
+
+        <TextView android:text="DragAim - Hỗ trợ kéo tâm"
+            android:textSize="20sp" android:textStyle="bold"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+
+        <Button android:id="@+id/btnOverlay" android:text="1. Cấp quyền Overlay"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/btnAccess" android:text="2. Bật Trợ năng (Accessibility)"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <TextView android:text="Trục X (Offset ngang)"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <SeekBar android:id="@+id/seekDx"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <TextView android:text="Trục Y (Offset dọc, âm là kéo lên)"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <SeekBar android:id="@+id/seekDy"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <TextView android:text="Thời gian kéo (ms)"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <SeekBar android:id="@+id/seekDuration"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <Switch android:id="@+id/switchCurve" android:text="Sử dụng đường cong"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <Button android:id="@+id/btnStart" android:text="3. BẮT ĐẦU (Hiển thị nút nổi)"
+            android:backgroundTint="#4CAF50"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"/>
+        <Button android:id="@+id/btnStop" android:text="DỪNG"
+            android:backgroundTint="#F44336"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    </LinearLayout>
+</ScrollView>
